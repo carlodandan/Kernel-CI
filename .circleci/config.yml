@@ -1,0 +1,52 @@
+version: 2.1
+
+jobs:
+  kernel:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large
+    steps:
+      - checkout
+      - when:
+          condition:
+            equal: [ test, << pipeline.git.branch >> ]
+          steps:
+            - run:
+                name: Swap File
+                command: |
+                  export SWAP_FILE=/swapfile
+                  sudo fallocate -l 16G $SWAP_FILE
+                  sudo chmod 600 $SWAP_FILE
+                  sudo mkswap $SWAP_FILE
+                  sudo swapon $SWAP_FILE
+                  echo "Done setting up additional RAM."
+
+            - run:
+                name: Install Git-Repo
+                command: |
+                  mkdir -p ~/bin
+                  curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
+                  chmod a+x ~/bin/repo
+                  sudo ln -sf ~/bin/repo /usr/bin/repo
+                  echo "Done setting up git-repo tool."
+        
+            - run: 
+                name: Sync Manifest
+                command: |
+                  mkdir -p ~/android/kernel && cd ~/android/kernel
+                  git config --global user.name "Carlo Dandan"
+                  git config --global user.email "carlodandan.personal@proton.me"
+                  repo init --depth=1 -u https://gitlab.com/carlodeeCrypton/sm8475_manifest.git  -b main
+                  repo sync -j$(nproc --all) --force-sync
+                  echo "Done syncing manifest source."
+    
+            - run:
+                name: Build Kernel
+                command: |
+                   cd ~/android/kernel
+                   BUILD_CONFIG=common/build.config.aarch64 build/build.sh
+             
+workflows:
+  build:
+    jobs:
+      - kernel
