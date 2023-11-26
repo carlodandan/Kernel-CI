@@ -42,7 +42,7 @@ jobs:
                   mkdir -p ~/android/kernel && cd ~/android/kernel
                   git config --global user.name "Carlo Dandan"
                   git config --global user.email "carlodandan.personal@proton.me"
-                  repo init --depth=1 -u https://gitlab.com/carlodeeCrypton/sm8475_manifest.git  -b main
+                  repo init --depth=1 -u https://github.com/cd-Crypton/android_kernel_oplus_sm8475-manifest -b main
                   repo sync -j$(nproc --all) --force-sync
                   echo "Done syncing manifest source."
     
@@ -50,7 +50,7 @@ jobs:
                 name: Build Kernel
                 command: |
                    cd ~/android/kernel
-                   BUILD_CONFIG=common/build.config.aarch64 build/build.sh
+                   BUILD_CONFIG=sm8475/build.config.aarch64 DEFCONFIG=vendor/waipio_GKI.config SKIP_MRPROPER=1 build/build.sh
              
 workflows:
   build:
